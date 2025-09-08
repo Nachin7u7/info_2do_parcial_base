@@ -37,9 +37,15 @@ var final_touch = Vector2.ZERO
 var is_controlling = false
 
 # scoring variables and signals
-
+var current_score = 0
+var target_score = 1000  # puntos necesarios para ganar
+var points_per_match = 50
 
 # counter variables and signals
+var moves_left = 30
+var time_left = 120.0  # 2 minutos
+var game_won = false
+var game_lost = false
 
 
 # Called when the node enters the scene tree for the first time.
@@ -48,6 +54,7 @@ func _ready():
 	randomize()
 	all_pieces = make_2d_array()
 	spawn_pieces()
+	update_ui()
 
 func make_2d_array():
 	var array = []
@@ -102,6 +109,10 @@ func match_at(i, j, color):
 				return true
 
 func touch_input():
+	# No procesar input si el juego terminó
+	if game_won or game_lost:
+		return
+		
 	var mouse_pos = get_global_mouse_position()
 	var grid_pos = pixel_to_grid(mouse_pos.x, mouse_pos.y)
 	if Input.is_action_just_pressed("ui_touch") and in_grid(grid_pos.x, grid_pos.y):
@@ -115,6 +126,10 @@ func touch_input():
 		touch_difference(first_touch, final_touch)
 
 func swap_pieces(column, row, direction: Vector2):
+	# No permitir intercambios si el juego terminó
+	if game_won or game_lost:
+		return
+		
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
 	if first_piece == null or other_piece == null:
@@ -128,8 +143,18 @@ func swap_pieces(column, row, direction: Vector2):
 	#other_piece.position = grid_to_pixel(column, row)
 	first_piece.move(grid_to_pixel(column + direction.x, row + direction.y))
 	other_piece.move(grid_to_pixel(column, row))
+	
+	# reducir movimientos cuando se hace un intercambio
+	moves_left -= 1
+	update_ui()
+	
 	if not move_checked:
 		find_matches()
+		
+	# verificar si se acabaron los movimientos
+	if moves_left <= 0 and not game_won:
+		game_lost = true
+		game_over()
 
 func store_info(first_piece, other_piece, place, direction):
 	piece_one = first_piece
@@ -158,8 +183,17 @@ func touch_difference(grid_1, grid_2):
 			swap_pieces(grid_1.x, grid_1.y, Vector2(0, -1))
 
 func _process(delta):
-	if state == MOVE:
+	# Solo procesar si el juego no ha terminado
+	if state == MOVE and not game_won and not game_lost:
 		touch_input()
+		
+	# actualizar timer solo si el juego sigue activo
+	if time_left > 0 and not game_won and not game_lost:
+		time_left -= delta
+		update_ui()
+	elif not game_won and not game_lost:
+		game_lost = true
+		game_over()
 
 func find_matches():
 	for i in width:
@@ -199,12 +233,20 @@ func find_matches():
 	
 func destroy_matched():
 	var was_matched = false
+	var pieces_destroyed = 0
 	for i in width:
 		for j in height:
 			if all_pieces[i][j] != null and all_pieces[i][j].matched:
 				was_matched = true
+				pieces_destroyed += 1
 				all_pieces[i][j].queue_free()
 				all_pieces[i][j] = null
+				
+	# agregar puntos por piezas destruidas
+	if pieces_destroyed > 0:
+		current_score += pieces_destroyed * points_per_match
+		update_ui()
+		check_win_condition()
 				
 	move_checked = true
 	if was_matched:
@@ -274,4 +316,70 @@ func _on_refill_timer_timeout():
 	
 func game_over():
 	state = WAIT
-	print("game over")
+	
+	# Detener todos los timers
+	get_parent().get_node("destroy_timer").stop()
+	get_parent().get_node("collapse_timer").stop()
+	get_parent().get_node("refill_timer").stop()
+	
+	var banner = get_parent().get_node("game_over_banner")
+	var banner_label = get_parent().get_node("game_over_banner/banner_label")
+	
+	if game_won:
+		print("¡GANASTE! Puntuación: ", current_score, "/", target_score)
+		banner_label.text = "YOU WIN!"
+		banner_label.modulate = Color.GREEN
+	else:
+		if moves_left <= 0:
+			print("PERDISTE - Se acabaron los movimientos")
+			banner_label.text = "YOU LOSE!\nNo more moves"
+		else:
+			print("PERDISTE - Se acabó el tiempo")
+			banner_label.text = "YOU LOSE!\nTime's up"
+		banner_label.modulate = Color.RED
+		print("Puntuación final: ", current_score, "/", target_score)
+	
+	# Mostrar banner
+	banner.visible = true
+	print("Presiona ENTER para reiniciar")
+
+func check_win_condition():
+	if current_score >= target_score:
+		game_won = true
+		game_over()
+
+func update_ui():
+	var top_ui = get_parent().get_node("top_ui")
+	if top_ui:
+		top_ui.update_moves(moves_left)
+		top_ui.update_score(current_score, target_score)
+
+func restart_game():
+	# Ocultar banner
+	var banner = get_parent().get_node("game_over_banner")
+	banner.visible = false
+	
+	# reiniciar variables
+	current_score = 0
+	moves_left = 30
+	time_left = 120.0
+	game_won = false
+	game_lost = false
+	state = MOVE
+	
+	# limpiar piezas existentes
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				all_pieces[i][j].queue_free()
+				all_pieces[i][j] = null
+	
+	# generar nuevas piezas
+	spawn_pieces()
+	update_ui()
+	print("Juego reiniciado")
+
+func _input(event):
+	# reiniciar con ENTER cuando el juego termina
+	if (game_won or game_lost) and event.is_action_pressed("ui_accept"):
+		restart_game()

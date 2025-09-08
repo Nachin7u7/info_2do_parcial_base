@@ -1,0 +1,134 @@
+[gd_scene load_steps=4 format=3 uid="uid://ye8aioocqpus"]
+
+[ext_resource type="Script" uid="uid://b0bgh6dafwfm" path="res://scripts/menu.gd" id="1_vjb58"]
+[ext_resource type="Texture2D" uid="uid://brp4euwugc18f" path="res://assets/background.png" id="1_yqeox"]
+[ext_resource type="FontFile" uid="uid://b25431rxog83j" path="res://assets/fonts/Kenney Blocks.ttf" id="3_con2f"]
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vjb58")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.497
+anchor_top = 0.764
+anchor_right = 0.497
+anchor_bottom = 0.764
+offset_left = -221.272
+offset_top = -65.3361
+offset_right = 220.728
+offset_bottom = 64.6639
+grow_horizontal = 2
+grow_vertical = 0
+texture = ExtResource("1_yqeox")
+stretch_mode = 6
+
+[node name="SlideContainer" type="Control" parent="Background"]
+anchors_preset = 0
+anchor_left = 0.1
+anchor_top = 0.25
+anchor_right = 0.9
+anchor_bottom = 0.75
+
+[node name="Difficulties" type="HBoxContainer" parent="Background/SlideContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 218.0
+offset_right = 1001.2
+offset_bottom = -44.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MovesEasy" type="Panel" parent="Background/SlideContainer/Difficulties"]
+custom_minimum_size = Vector2(350, 250)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Background/SlideContainer/Difficulties/MovesEasy"]
+layout_mode = 0
+theme_override_fonts/font = ExtResource("3_con2f")
+theme_override_font_sizes/font_size = 44
+text = "Moves – Easy
+Target: 200"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MovesHard" type="Panel" parent="Background/SlideContainer/Difficulties"]
+custom_minimum_size = Vector2(350, 250)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Background/SlideContainer/Difficulties/MovesHard"]
+layout_mode = 0
+theme_override_fonts/font = ExtResource("3_con2f")
+theme_override_font_sizes/font_size = 44
+text = "Moves – Hard
+Target: 500"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimedEasy" type="Panel" parent="Background/SlideContainer/Difficulties"]
+custom_minimum_size = Vector2(350, 250)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Background/SlideContainer/Difficulties/TimedEasy"]
+layout_mode = 0
+theme_override_fonts/font = ExtResource("3_con2f")
+theme_override_font_sizes/font_size = 44
+text = "Timed – Easy
+Target: 200"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimedHard" type="Panel" parent="Background/SlideContainer/Difficulties"]
+custom_minimum_size = Vector2(350, 250)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Background/SlideContainer/Difficulties/TimedHard"]
+layout_mode = 0
+theme_override_fonts/font = ExtResource("3_con2f")
+theme_override_font_sizes/font_size = 44
+text = "Timed – Hard
+Target: 500"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ArrowLeft" type="Button" parent="Background"]
+layout_mode = 0
+anchor_left = 0.05
+anchor_top = 0.5
+anchor_right = 0.1
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -40.0
+offset_right = 40.0
+offset_bottom = 40.0
+text = "<"
+
+[node name="ArrowRight" type="Button" parent="Background"]
+layout_mode = 0
+anchor_left = 0.9
+anchor_top = 0.5
+anchor_right = 0.95
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -40.0
+offset_right = 40.0
+offset_bottom = 40.0
+text = ">"
+
+[node name="SelectButton" type="Button" parent="Background"]
+layout_mode = 0
+anchor_left = 0.4
+anchor_top = 0.85
+anchor_right = 0.6
+anchor_bottom = 0.92
+theme_override_fonts/font = ExtResource("3_con2f")
+text = "Seleccionar"

@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3 uid="uid://bwgsiyu4bklji"]
+
+[ext_resource type="Texture2D" uid="uid://brp4euwugc18f" path="res://assets/background.png" id="1_mpaki"]
+[ext_resource type="PackedScene" uid="uid://bt33j5dwxano3" path="res://scenes/top_ui.tscn" id="2_vimnk"]
+[ext_resource type="Texture2D" uid="uid://cdunkljd6up72" path="res://assets/bottom_ui.png" id="3_23sge"]
+[ext_resource type="Script" uid="uid://biuagxx08tqcb" path="res://scripts/grid.gd" id="4_8m2y4"]
+[ext_resource type="Script" uid="uid://b1one7whwa6iw" path="res://scripts/level_manager.gd" id="5_5uybw"]
+
+[node name="Game" type="Node2D"]
+script = ExtResource("5_5uybw")
+level_type = 1
+
+[node name="background" type="TextureRect" parent="."]
+offset_right = 576.0
+offset_bottom = 1024.0
+texture = ExtResource("1_mpaki")
+
+[node name="top_ui" parent="." instance=ExtResource("2_vimnk")]
+
+[node name="bottom_ui" type="TextureRect" parent="."]
+offset_top = 928.0
+offset_right = 576.0
+offset_bottom = 1020.0
+texture = ExtResource("3_23sge")
+
+[node name="grid" type="Node2D" parent="."]
+script = ExtResource("4_8m2y4")
+width = 8
+height = 10
+x_start = 64
+y_start = 800
+offset = 64
+y_offset = 2
+
+[node name="destroy_timer" type="Timer" parent="."]
+wait_time = 0.5
+one_shot = true
+
+[node name="collapse_timer" type="Timer" parent="."]
+wait_time = 0.5
+one_shot = true
+
+[node name="refill_timer" type="Timer" parent="."]
+wait_time = 0.5
+one_shot = true
+
+[node name="Node" type="Node" parent="."]
+script = ExtResource("5_5uybw")
+
+[connection signal="timeout" from="destroy_timer" to="grid" method="_on_destroy_timer_timeout"]
+[connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
+[connection signal="timeout" from="refill_timer" to="grid" method="_on_refill_timer_timeout"]

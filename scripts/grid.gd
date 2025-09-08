@@ -84,12 +84,22 @@ func in_grid(column, row):
 	return column >= 0 and column < width and row >= 0 and row < height
 
 func spawn_pieces():
+	var special_types = ["column", "row", "adjacent"]
 	for i in width:
 		for j in height:
 			# random number
 			var rand = randi_range(0, possible_pieces.size() - 1)
 			# instance
 			var piece = possible_pieces[rand].instantiate()
+
+			# Probabilidad baja de pieza especial (por ejemplo 7%)
+			if randi_range(1, 100) <= 7:
+				# Elegir tipo especial aleatorio
+				var stype = special_types[randi_range(0, special_types.size() - 1)]
+				piece.special_type = stype
+			else:
+				piece.special_type = "normal"
+
 			# repeat until no matches
 			var max_loops = 100
 			var loops = 0
@@ -97,6 +107,12 @@ func spawn_pieces():
 				rand = randi_range(0, possible_pieces.size() - 1)
 				loops += 1
 				piece = possible_pieces[rand].instantiate()
+				# Reasignar tipo especial si corresponde
+				if randi_range(1, 100) <= 7:
+					var stype = special_types[randi_range(0, special_types.size() - 1)]
+					piece.special_type = stype
+				else:
+					piece.special_type = "normal"
 			add_child(piece)
 			piece.position = grid_to_pixel(i, j)
 			# fill array with pieces
@@ -202,40 +218,76 @@ func _process(delta):
 		game_over()
 
 func find_matches():
+
 	for i in width:
 		for j in height:
 			if all_pieces[i][j] != null:
 				var current_color = all_pieces[i][j].color
+				var specials = []
 				# detect horizontal matches
 				if (
-					i > 0 and i < width -1
-					and
-					all_pieces[i - 1][j] != null and all_pieces[i + 1][j]
-					and
-					all_pieces[i - 1][j].color == current_color and all_pieces[i + 1][j].color == current_color
+					i > 0 and i < width - 1
+					and all_pieces[i - 1][j] != null and all_pieces[i + 1][j] != null
+					and all_pieces[i - 1][j].color == current_color and all_pieces[i + 1][j].color == current_color
 				):
-					all_pieces[i - 1][j].matched = true
-					all_pieces[i - 1][j].dim()
-					all_pieces[i][j].matched = true
-					all_pieces[i][j].dim()
-					all_pieces[i + 1][j].matched = true
-					all_pieces[i + 1][j].dim()
+					var match_pieces = [all_pieces[i - 1][j], all_pieces[i][j], all_pieces[i + 1][j]]
+					for p in match_pieces:
+						if p.special_type != "normal":
+							specials.append({'piece': p, 'i': i if p == all_pieces[i][j] else (i-1 if p == all_pieces[i-1][j] else i+1), 'j': j})
+					for p in match_pieces:
+						p.matched = true
+						p.dim()
 				# detect vertical matches
 				if (
-					j > 0 and j < height -1
-					and
-					all_pieces[i][j - 1] != null and all_pieces[i][j + 1]
-					and
-					all_pieces[i][j - 1].color == current_color and all_pieces[i][j + 1].color == current_color
+					j > 0 and j < height - 1
+					and all_pieces[i][j - 1] != null and all_pieces[i][j + 1] != null
+					and all_pieces[i][j - 1].color == current_color and all_pieces[i][j + 1].color == current_color
 				):
-					all_pieces[i][j - 1].matched = true
-					all_pieces[i][j - 1].dim()
-					all_pieces[i][j].matched = true
-					all_pieces[i][j].dim()
-					all_pieces[i][j + 1].matched = true
-					all_pieces[i][j + 1].dim()
+					var match_pieces = [all_pieces[i][j - 1], all_pieces[i][j], all_pieces[i][j + 1]]
+					for p in match_pieces:
+						if p.special_type != "normal":
+							specials.append({'piece': p, 'i': i, 'j': j if p == all_pieces[i][j] else (j-1 if p == all_pieces[i][j-1] else j+1)})
+					for p in match_pieces:
+						p.matched = true
+						p.dim()
+
+				# Procesar piezas especiales encontradas
+				for s in specials:
+					var stype = s['piece'].special_type
+					var si = s['i']
+					var sj = s['j']
+					if stype == "column":
+						eliminate_column(si)
+					elif stype == "row":
+						eliminate_row(sj)
+					elif stype == "adjacent":
+						eliminate_adjacent(si, sj)
 
 	get_parent().get_node("destroy_timer").start()
+
+# Elimina toda la columna i
+func eliminate_column(i):
+	for j in height:
+		if all_pieces[i][j] != null:
+			all_pieces[i][j].matched = true
+			all_pieces[i][j].dim()
+
+# Elimina toda la fila j
+func eliminate_row(j):
+	for i in width:
+		if all_pieces[i][j] != null:
+			all_pieces[i][j].matched = true
+			all_pieces[i][j].dim()
+
+# Elimina piezas adyacentes a (i, j)
+func eliminate_adjacent(i, j):
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			var ni = i + dx
+			var nj = j + dy
+			if in_grid(ni, nj) and all_pieces[ni][nj] != null:
+				all_pieces[ni][nj].matched = true
+				all_pieces[ni][nj].dim()
 
 func destroy_matched():
 	var was_matched = false
